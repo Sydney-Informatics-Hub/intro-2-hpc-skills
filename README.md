@@ -51,3 +51,16 @@ You can also sticky beak at what other project members have been up to by runnin
 bash scripts/point-the-finger.sh -p qc03
 ```
 
+## Job monitoring 
+
+
+
+## Software 
+
+NCI helpdesk staff install commonly used software to a globally available filesystem called `/apps`. To view these modules, run: 
+
+```bash
+module avail 
+```
+
+If software you want to run is not available, you should use Singularity
