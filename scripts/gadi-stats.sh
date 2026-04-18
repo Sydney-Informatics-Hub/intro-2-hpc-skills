@@ -2,7 +2,7 @@
 
 # ============================================================
 # Usage: bash gadi-stats.sh -p <project_code>
-# Example: bash gadi-stats.sh -p qc03
+# Example: bash gadi-stats.sh -p c25
 # ============================================================
 
 # Parse flags
