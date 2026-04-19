@@ -104,51 +104,6 @@ Let's also take a look at all jobs running on all queues:
 qstat -Q
 ```
 
-```
-Queue              Max   Tot Ena Str   Que   Run   Hld   Wat   Trn   Ext Type
----------------- ----- ----- --- --- ----- ----- ----- ----- ----- ----- ----
-normal               0  1684 yes yes   680     0  1001     3     0     0 Rou*
-normal-exec          0  2171 yes yes    88  1417   666     0     0     0 Exe*
-express              0     0 yes yes     0     0     0     0     0     0 Rou*
-express-exec         0     4 yes yes     0     2     2     0     0     0 Exe*
-copyq                0    29 yes yes     0     0     0    29     0     0 Rou*
-copyq-exec           0     9 yes yes     0     7     2     0     0     0 Exe*
-gpuvolta             0   500 yes yes   500     0     0     0     0     0 Rou*
-gpuvolta-exec        0   447 yes yes   167   236    36     0     0     0 Exe*
-hugemem-exec         0    29 yes yes     1    28     0     0     0     0 Exe*
-hugemem              0     0 yes yes     0     0     0     0     0     0 Rou*
-biodev               0     0 yes yes     0     0     0     0     0     0 Rou*
-biodev-exec          0     0 yes yes     0     0     0     0     0     0 Exe*
-megamembw-exec       0    13 yes yes     0     1    12     0     0     0 Exe*
-megamembw            0     0 yes yes     0     0     0     0     0     0 Rou*
-normalbw-exec        0   149 yes yes     1   134    13     0     0     1 Exe*
-normalbw             0     5 yes yes     0     0     0     5     0     0 Rou*
-expressbw-exec       0     6 yes yes     0     3     3     0     0     0 Exe*
-expressbw            0     0 yes yes     0     0     0     0     0     0 Rou*
-normalsl-exec        0    13 yes yes     0    12     1     0     0     0 Exe*
-normalsl             0     0 yes yes     0     0     0     0     0     0 Rou*
-hugemembw-exec       0    13 yes yes     5     7     1     0     0     0 Exe*
-hugemembw            0     0 yes yes     0     0     0     0     0     0 Rou*
-megamem              0     0 yes yes     0     0     0     0     0     0 Rou*
-megamem-exec         0    46 yes yes    44     2     0     0     0     0 Exe*
-gpursaa              0     0 yes yes     0     0     0     0     0     0 Rou*
-gpursaa-exec         0     2 yes yes     0     2     0     0     0     0 Exe*
-analysis             0     0 yes yes     0     0     0     0     0     0 Rou*
-analysis-exec        0     1 yes yes     0     1     0     0     0     0 Exe*
-dgxa100              0    24 yes yes    24     0     0     0     0     0 Rou*
-dgxa100-exec         0    38 yes yes    32     4     2     0     0     0 Exe*
-normalsr             0     0 yes yes     0     0     0     0     0     0 Rou*
-normalsr-exec        0   221 yes yes     7    47   167     0     0     0 Exe*
-expresssr            0     0 yes yes     0     0     0     0     0     0 Rou*
-expresssr-exec       0     0 yes yes     0     0     0     0     0     0 Exe*
-rsaa                 0     0 yes yes     0     0     0     0     0     0 Rou*
-rsaa-exec            0    10 yes yes     0    10     0     0     0     0 Exe*
-workflow             0     0 yes yes     0     0     0     0     0     0 Rou*
-workflow-exec        0     0 yes yes     0     0     0     0     0     0 Exe*
-gpuhopper            0   130 yes yes   130     0     0     0     0     0 Rou*
-gpuhopper-exec       0   259 yes yes   185    53    21     0     0     0 Exe*
-```
-
 Unlike most other HPCs, Gadi has a unique set up whereby your submitted jobs are run on differently named queues e.g. gpuhopper vs gpuhopper-exec". The queues with -exec are where your jobs actually run. 
 
 Once your jobs are complete, run the following script to summarise the outputs of your benchmarking job: 
