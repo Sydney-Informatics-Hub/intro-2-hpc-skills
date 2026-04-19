@@ -58,7 +58,7 @@ Submit a series of benchmarking jobs, monitor it while it runs, and inspect the 
 Run the example benchmarking script for BWA, submitting jobs to the `normalbw` queue: 
 
 ```bash
-bash bwa-benchmark-run.sh normalbw
+bash scripts/bwa-benchmark-run.sh normalbw
 ```
 
 You'll get the following output: 
@@ -106,6 +106,6 @@ Unlike most other HPCs, Gadi has a unique set up whereby your submitted jobs are
 Once your jobs are complete, run the following script to summarise the outputs of your benchmarking job: 
 
 ```bash
-bash benchmark-summary.sh
+bash scripts/benchmark-summary.sh
 ```
 
