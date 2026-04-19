@@ -56,7 +56,7 @@ module load bwa/0.7.17
 module load samtools/1.19
 module load samblaster/0.1.24
 
-ref=./inputs/Reference/hs38DH.fasta
+ref=/g/data/qc03/tests/reference/hg38_chromosomesOnly.fa
 
 SAMPLE=subset_10K
 fq1=../assets/NA12877_R1_10k.fq.gz
