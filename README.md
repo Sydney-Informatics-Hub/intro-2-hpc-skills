@@ -154,5 +154,6 @@ Unlike most other HPCs, Gadi has a unique set up whereby your submitted jobs are
 Once your jobs are complete, run the following script to summarise the outputs of your benchmarking job: 
 
 ```bash
-
+bash benchmark-summary.sh
 ```
+
