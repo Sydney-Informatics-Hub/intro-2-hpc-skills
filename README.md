@@ -68,12 +68,9 @@ You'll get the following output:
 
 Benchmarking bwa on queue normalbw for bwa-benchmark with 1 NCPUS and 9 MEM with job ID: 166489215.gadi-pbs
 
-
 Benchmarking bwa on queue normalbw for bwa-benchmark with 7 NCPUS and 63 MEM with job ID: 166489216.gadi-pbs
 
-
 Benchmarking bwa on queue normalbw for bwa-benchmark with 14 NCPUS and 126 MEM with job ID: 166489217.gadi-pbs
-
 
 Benchmarking bwa on queue normalbw for bwa-benchmark with 28 NCPUS and 250 MEM with job ID: 166489219.gadi-pbs
 ```
@@ -104,7 +101,7 @@ Let's also take a look at all jobs running on all queues:
 qstat -Q
 ```
 
-Unlike most other HPCs, Gadi has a unique set up whereby your submitted jobs are run on differently named queues e.g. gpuhopper vs gpuhopper-exec". The queues with -exec are where your jobs actually run. 
+Unlike most other HPCs, Gadi has a unique set up whereby your submitted jobs are run on differently named queues e.g. "gpuhopper" vs "gpuhopper-exec". The queues with -exec are where your jobs actually run. 
 
 Once your jobs are complete, run the following script to summarise the outputs of your benchmarking job: 
 
