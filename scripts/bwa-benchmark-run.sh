@@ -109,7 +109,7 @@ fi
 ### DO NOT EDIT BELOW THIS LINE 
 ################################################
 
-script=${tool}-benchmark.sh
+script=./scripts/${tool}-benchmark.sh
 outdir=${tool}/${prefix}
 logs=./PBS_logs/${tool}
 
