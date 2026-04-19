@@ -1,4 +1,26 @@
 PBS Log Summary
 Directory: PBS_logs
-Generated: 2026-04-20 09:32:37
+Generated: 2026-04-20 09:35:23
 ================================================================================
+  Log File                                 Exit     NCPUs    Mem Req      Mem Used     Wall Req     Wall Used    SUs   
+-------------------------------------------------------------------------------------------------------------------
+  normalbw_14NCPUS_126MEM_bwa-benchmark.o  0        14       126.0GB Memory 10.11GB      02:00:00     00:00:08     0.04  
+  normalbw_1NCPUS_9MEM_bwa-benchmark.o     0        1        9.0GB Memory 9.0GB        02:00:00     00:00:07     0.00  
+  normalbw_28NCPUS_250MEM_bwa-benchmark.o  0        28       250.0GB Memory 10.11GB      02:00:00     00:00:07     0.07  
+  normalbw_7NCPUS_63MEM_bwa-benchmark.o    0        7        63.0GB Memory 10.11GB      02:00:00     00:00:11     0.03  
+
+FAILED JOBS
+
+  [ok] No failed jobs found
+
+SPEEDUP SUMMARY
+
+  NCPUs    Walltime Used  Speedup    Efficiency  
+--------------------------------------------------
+  1        00:00:07       1.00x      100%        
+  7        00:00:11       0.64x      9%          
+  14       00:00:08       0.88x      6%          
+  28       00:00:07       1.00x      4%          
+
+================================================================================
+End of report

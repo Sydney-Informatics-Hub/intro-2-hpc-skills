@@ -44,10 +44,7 @@ clear
 
 echo -e "${CYAN}"
 cat << 'EOF'
-  ____  ____  ____    __    __    __    ___  ____  __  __  __  __ _  ___
- (  _ \(  _ \/ ___)  (  )  /  \  / _\  / __)(  __)(  )(  )(  )(  ( \/ __)
-  )   / ) __/\___ \   )( (  O )/    \ ( (_ \ ) _)  )( )(  )( /    /( (_ \
- (__\_)(__)  (____/  (__) \__/ \_/\_/ \___/(____)(__(__)(__)\_)__) \___/
+
 EOF
 echo -e "${NC}"
 
@@ -66,4 +63,125 @@ EOF
 echo -e "\n${BOLD}${CYAN}  [1] JOB SUMMARY TABLE${NC}\n"
 
 HEADER=$(printf "  %-40s %-8s %-8s %-12s %-12s %-12s %-12s %-6s\n" \
-    "Log File" "Exit" "NCPUs" "Mem Req" "Mem Used" "Wall Req"
+    "Log File" "Exit" "NCPUs" "Mem Req" "Mem Used" "Wall Req" "Wall Used" "SUs")
+echo -e "${BOLD}${HEADER}${NC}"
+echo -e "  $(printf '%0.s-' {1..115})"
+
+echo "$HEADER" >> $OUTPUT
+printf '%0.s-' {1..115} >> $OUTPUT
+echo "" >> $OUTPUT
+
+for OFILE in $(find ${LOG_DIR} -name "*.o" | sort); do
+
+    FILENAME=$(basename $OFILE)
+
+    # Check file contains a resource usage block
+    if ! grep -q "Resource Usage" $OFILE 2>/dev/null; then
+        printf "  %-40s %-s\n" "$FILENAME" "no resource block found -- job may still be running"
+        printf "  %-40s %-s\n" "$FILENAME" "no resource block found" >> $OUTPUT
+        continue
+    fi
+
+    EXIT_STATUS=$(grep "Exit Status"      $OFILE | awk '{print $NF}')
+    NCPUS=$(grep "NCPUs Requested"        $OFILE | awk '{print $3}')
+    MEM_REQ=$(grep "Memory Requested"     $OFILE | awk '{print $3, $4}' | xargs)
+    MEM_USED=$(grep "Memory Used"         $OFILE | awk '{print $NF}')
+    WALL_REQ=$(grep "Walltime Requested"  $OFILE | awk '{print $3}')
+    WALL_USED=$(grep "Walltime Used"      $OFILE | awk '{print $NF}')
+    SUS=$(grep "Service Units"            $OFILE | awk '{print $NF}')
+
+    if [ "$EXIT_STATUS" == "0" ]; then
+        EXIT_COLOUR=$GREEN
+    else
+        EXIT_COLOUR=$RED
+    fi
+
+    printf "  %-40s ${EXIT_COLOUR}%-8s${NC} %-8s %-12s %-12s %-12s %-12s %-6s\n" \
+        "$FILENAME" "$EXIT_STATUS" "$NCPUS" "$MEM_REQ" "$MEM_USED" "$WALL_REQ" "$WALL_USED" "$SUS"
+
+    printf "  %-40s %-8s %-8s %-12s %-12s %-12s %-12s %-6s\n" \
+        "$FILENAME" "$EXIT_STATUS" "$NCPUS" "$MEM_REQ" "$MEM_USED" "$WALL_REQ" "$WALL_USED" "$SUS" >> $OUTPUT
+
+done
+
+# ------------------------------------------------------------
+echo -e "\n${BOLD}${CYAN}  [2] FAILED JOBS${NC}\n"
+echo -e "\nFAILED JOBS\n" >> $OUTPUT
+
+FAILED=0
+for OFILE in $(find ${LOG_DIR} -name "*.o" | sort); do
+    EXIT_STATUS=$(grep "Exit Status" $OFILE 2>/dev/null | awk '{print $NF}')
+    if [ ! -z "$EXIT_STATUS" ] && [ "$EXIT_STATUS" != "0" ]; then
+        FILENAME=$(basename $OFILE)
+        EFILE="${OFILE%.o}.e"
+        echo -e "  ${RED}[FAILED]${NC} ${FILENAME} (exit status: ${EXIT_STATUS})"
+        echo "  [FAILED] ${FILENAME} (exit status: ${EXIT_STATUS})" >> $OUTPUT
+
+        if [ -f "$EFILE" ] && [ -s "$EFILE" ]; then
+            echo -e "  ${YELLOW}  Last 10 lines of stderr ($(basename $EFILE)):${NC}"
+            echo "  Last 10 lines of stderr ($(basename $EFILE)):" >> $OUTPUT
+            tail -n 10 $EFILE | while read line; do
+                echo -e "    ${YELLOW}${line}${NC}"
+                echo "    ${line}" >> $OUTPUT
+            done
+        fi
+        echo ""
+        FAILED=$((FAILED + 1))
+    fi
+done
+
+if [ $FAILED -eq 0 ]; then
+    echo -e "  ${GREEN}[ok] No failed jobs found${NC}"
+    echo "  [ok] No failed jobs found" >> $OUTPUT
+fi
+
+# ------------------------------------------------------------
+echo -e "\n${BOLD}${CYAN}  [3] SPEEDUP SUMMARY${NC}\n"
+echo -e "\nSPEEDUP SUMMARY\n" >> $OUTPUT
+
+echo -e "  ${BOLD}$(printf "  %-8s %-14s %-10s %-12s\n" "NCPUs" "Walltime Used" "Speedup" "Efficiency")${NC}"
+echo -e "  $(printf '%0.s-' {1..50})"
+printf "  %-8s %-14s %-10s %-12s\n" "NCPUs" "Walltime Used" "Speedup" "Efficiency" >> $OUTPUT
+printf '%0.s-' {1..50} >> $OUTPUT
+echo "" >> $OUTPUT
+
+declare -A WALL_SECONDS
+declare -A WALL_LABELS
+
+for OFILE in $(find ${LOG_DIR} -name "*.o" | sort); do
+    WALL_USED=$(grep "Walltime Used"      $OFILE 2>/dev/null | awk '{print $NF}')
+    NCPUS=$(grep "NCPUs Requested"        $OFILE 2>/dev/null | awk '{print $3}')
+    EXIT_STATUS=$(grep "Exit Status"      $OFILE 2>/dev/null | awk '{print $NF}')
+
+    if [ -z "$WALL_USED" ] || [ -z "$NCPUS" ] || [ "$EXIT_STATUS" != "0" ]; then
+        continue
+    fi
+
+    SECONDS_VAL=$(echo $WALL_USED | awk -F: '{print ($1*3600)+($2*60)+$3}')
+    WALL_SECONDS[$NCPUS]=$SECONDS_VAL
+    WALL_LABELS[$NCPUS]=$WALL_USED
+done
+
+BASELINE_CPUS=$(echo "${!WALL_SECONDS[@]}" | tr ' ' '\n' | sort -n | head -1)
+BASELINE_SECS=${WALL_SECONDS[$BASELINE_CPUS]}
+
+if [ -z "$BASELINE_SECS" ]; then
+    echo -e "  ${YELLOW}Not enough completed jobs to calculate speedup${NC}"
+    echo "  Not enough completed jobs to calculate speedup" >> $OUTPUT
+else
+    for NCPUS in $(echo "${!WALL_SECONDS[@]}" | tr ' ' '\n' | sort -n); do
+        SECS=${WALL_SECONDS[$NCPUS]}
+        LABEL=${WALL_LABELS[$NCPUS]}
+        SPEEDUP=$(awk "BEGIN {printf \"%.2f\", ${BASELINE_SECS}/${SECS}}")
+        EFFICIENCY=$(awk "BEGIN {printf \"%.0f%%\", (${BASELINE_SECS}/${SECS}/${NCPUS})*100}")
+
+        printf "  %-8s %-14s %-10s %-12s\n" "$NCPUS" "$LABEL" "${SPEEDUP}x" "$EFFICIENCY"
+        printf "  %-8s %-14s %-10s %-12s\n" "$NCPUS" "$LABEL" "${SPEEDUP}x" "$EFFICIENCY" >> $OUTPUT
+    done
+fi
+
+# ------------------------------------------------------------
+echo -e "\n  ============================================================================"
+echo -e "  ${GREEN}Report saved to: ${OUTPUT}${NC}\n"
+echo -e "\n================================================================================" >> $OUTPUT
+echo "End of report" >> $OUTPUT

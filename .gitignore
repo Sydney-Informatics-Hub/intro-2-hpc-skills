@@ -1,2 +1,3 @@
-/scripts/bwa/*
-/scripts/PBS_logs 
+scripts/bwa/*
+scripts/PBS_logs 
+scripts/*txt
