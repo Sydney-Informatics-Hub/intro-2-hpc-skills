@@ -73,37 +73,50 @@ echo "$USAGE_SECTION" | grep -E '^[a-z]{2,3}[0-9]{3,4}' | \
     awk '{printf "  %-12s %-12s %-12s\n", $1, $2" "$3, $4" "$5}'
 
 # ------------------------------------------------------------
-# Fetch files report once and reuse
-FILES_RAW=$(nci-files-report -p ${PROJECT_CODE} 2>/dev/null)
+# Fetch files report once and reuse for sections [2] and [3]
+FILES_RAW=$(nci-files-report --project ${PROJECT_CODE} 2>/dev/null)
 
-SCRATCH_SCAN=$(echo "$FILES_RAW" | grep '^scratch' | head -1 | awk '{print $2}')
-GDATA_SCAN=$(echo "$FILES_RAW"   | grep '^gdata'   | head -1 | awk '{print $2}')
+# Aggregate per-user usage: convert all sizes to MiB, sum across groups, sort, reformat
+user_usage() {
+    local fs="$1"
+    echo "$FILES_RAW" | awk -v proj="$PROJECT_CODE" -v fs="$fs" '
+        $1==fs && $3==proj {
+            val=$6; num=val+0
+            unit=val; gsub(/[0-9.]+/,"",unit)
+            if      (unit=="T") mib=num*1024*1024
+            else if (unit=="G") mib=num*1024
+            else if (unit=="M") mib=num
+            else if (unit=="K") mib=num/1024
+            else                mib=num
+            space[$5]+=mib; files[$5]+=$8
+        }
+        END {
+            for (u in space) printf "%d %s %d\n", space[u], u, files[u]
+        }
+    ' | sort -rn | awk '{
+        mib=$1; user=$2; cnt=$3
+        if      (mib>=1024*1024) size=sprintf("%.1fT", mib/1024/1024)
+        else if (mib>=1024)      size=sprintf("%.1fG", mib/1024)
+        else                     size=sprintf("%.0fM", mib)
+        printf "  %-12s %-12s %-10s\n", user, size, cnt
+    }'
+}
 
 # ------------------------------------------------------------
 echo -e "\n${BOLD}${CYAN}  [2] SCRATCH USAGE BY USER (/scratch/${PROJECT_CODE})${NC}"
-echo -e "  Who is hogging scratch space? (scan date: ${SCRATCH_SCAN})\n"
+echo -e "  Who is hogging scratch space?\n"
 
 echo -e "  ${BOLD}$(printf "  %-12s %-12s %-10s\n" "User" "Space Used" "Files")${NC}"
 echo -e "  $(printf '%0.s-' {1..40})"
-
-echo "$FILES_RAW" | awk -v proj="$PROJECT_CODE" '
-    $1=="scratch" && $3==proj {
-        printf "  %-12s %-12s %-10s\n", $5, $6, $8
-    }
-' | sort -k2 -rh
+user_usage scratch
 
 # ------------------------------------------------------------
 echo -e "\n${BOLD}${CYAN}  [3] GDATA USAGE BY USER (/g/data/${PROJECT_CODE})${NC}"
-echo -e "  Who is hogging gdata space? (scan date: ${GDATA_SCAN})\n"
+echo -e "  Who is hogging gdata space?\n"
 
 echo -e "  ${BOLD}$(printf "  %-12s %-12s %-10s\n" "User" "Space Used" "Files")${NC}"
 echo -e "  $(printf '%0.s-' {1..40})"
-
-echo "$FILES_RAW" | awk -v proj="$PROJECT_CODE" '
-    $1=="gdata" && $3==proj {
-        printf "  %-12s %-12s %-10s\n", $5, $6, $8
-    }
-' | sort -k2 -rh
+user_usage gdata
 
 # ------------------------------------------------------------
 echo -e "\n${BOLD}${CYAN}  [4] STORAGE FILESYSTEM SUMMARY${NC}"
@@ -143,9 +156,7 @@ qstat -f 2>/dev/null | awk -v proj="$PROJECT_CODE" '
 echo -e "\n  ============================================================================"
 echo -e "  ${BOLD}Notes:${NC}"
 echo -e "  ${YELLOW}>>>${NC} Compute usage updates in real time"
-echo -e "  ${YELLOW}>>>${NC} Scratch storage scan date: ${SCRATCH_SCAN}"
-echo -e "  ${YELLOW}>>>${NC} Gdata storage scan date:   ${GDATA_SCAN}"
-echo -e "  ${YELLOW}>>>${NC} Storage figures may be up to 24 hours old"
+echo -e "  ${YELLOW}>>>${NC} Storage figures from nci-files-report (updated periodically by NCI)"
 echo -e "  ${YELLOW}>>>${NC} Talk to your project CI if allocation is being exhausted"
 echo -e "  ${YELLOW}>>>${NC} Run ${CYAN}qstat -u <username>${NC} to see a specific user's jobs"
 echo -e ""
