@@ -34,6 +34,9 @@ progress_bar() {
     local total=$2
     local width=40
 
+    used=$(echo "$used" | awk '{printf "%d", $1+0}' 2>/dev/null)
+    total=$(echo "$total" | awk '{printf "%d", $1+0}' 2>/dev/null)
+
     if [ -z "$used" ] || [ -z "$total" ] || [ "$total" -eq 0 ] 2>/dev/null; then
         echo -e "${YELLOW}  [could not calculate usage]${NC}"
         return
@@ -64,6 +67,19 @@ warn() {
 # OK function
 ok() {
     echo -e "  ${GREEN}[ok] $1${NC}"
+}
+
+# Convert storage value to MiB integer. Accepts "22.07 TiB", "22.07T", "900G", etc.
+to_mib() {
+    echo "$1" | awk '{
+        num  = $1
+        unit = (NF >= 2) ? toupper($2) : toupper(substr($1, length($1)))
+        if      (unit ~ /^T/) { printf "%d", num * 1024 * 1024 }
+        else if (unit ~ /^G/) { printf "%d", num * 1024 }
+        else if (unit ~ /^M/) { printf "%d", num }
+        else if (unit ~ /^K/) { printf "%d", num / 1024 }
+        else                  { printf "%d", num }
+    }'
 }
 
 # Convert KSU/SU to raw number for progress bar
@@ -104,8 +120,8 @@ HOME_QUOTA=$(echo "$HOME_LINE" | awk '{print $2}')
 HOME_FILES=$(echo "$HOME_LINE" | awk '{print $5}')
 HOME_FILES_QUOTA=$(echo "$HOME_LINE" | awk '{print $6}')
 
-HOME_USED_NUM=$(echo "$HOME_USED" | tr -d 'MGTKmgtkB')
-HOME_QUOTA_NUM=$(echo "$HOME_QUOTA" | tr -d 'MGTKmgtkB')
+HOME_USED_NUM=$(to_mib "$HOME_USED")
+HOME_QUOTA_NUM=$(to_mib "$HOME_QUOTA")
 
 if [ ! -z "$HOME_USED" ] && [ ! -z "$HOME_QUOTA" ]; then
     echo -e "  Space : ${BOLD}${HOME_USED}${NC} used of ${BOLD}${HOME_QUOTA}${NC}"
@@ -128,12 +144,16 @@ if [ -z "$SCRATCH_LINE" ]; then
 fi
 
 if [ ! -z "$SCRATCH_LINE" ]; then
-    SCRATCH_USED=$(echo "$SCRATCH_LINE" | awk '{print $2}')
-    SCRATCH_QUOTA=$(echo "$SCRATCH_LINE" | awk '{print $3}')
-    SCRATCH_USED_NUM=$(echo "$SCRATCH_USED" | tr -d 'MGTKmgtkB')
-    SCRATCH_QUOTA_NUM=$(echo "$SCRATCH_QUOTA" | tr -d 'MGTKmgtkB')
-    echo -e "  Space : ${BOLD}${SCRATCH_USED}${NC} used of ${BOLD}${SCRATCH_QUOTA}${NC}"
+    SCRATCH_USED=$(echo "$SCRATCH_LINE" | awk '{print $3, $4}')
+    SCRATCH_QUOTA=$(echo "$SCRATCH_LINE" | awk '{print $5, $6}')
+    SCRATCH_IUSED=$(echo "$SCRATCH_LINE" | awk '{print $9}')
+    SCRATCH_IQUOTA=$(echo "$SCRATCH_LINE" | awk '{print $10}')
+    SCRATCH_USED_NUM=$(to_mib "$SCRATCH_USED")
+    SCRATCH_QUOTA_NUM=$(to_mib "$SCRATCH_QUOTA")
+    echo -e "  Space  : ${BOLD}${SCRATCH_USED}${NC} used of ${BOLD}${SCRATCH_QUOTA}${NC}"
     progress_bar $SCRATCH_USED_NUM $SCRATCH_QUOTA_NUM
+    echo -e "  Inodes : ${BOLD}${SCRATCH_IUSED}${NC} used of ${BOLD}${SCRATCH_IQUOTA}${NC}"
+    progress_bar $SCRATCH_IUSED $SCRATCH_IQUOTA
 else
     warn "No scratch quota found. Run 'lquota' to check format."
 fi
@@ -158,12 +178,16 @@ if [ -z "$GDATA_LINE" ]; then
 fi
 
 if [ ! -z "$GDATA_LINE" ]; then
-    GDATA_USED=$(echo "$GDATA_LINE" | awk '{print $2}')
-    GDATA_QUOTA=$(echo "$GDATA_LINE" | awk '{print $3}')
-    GDATA_USED_NUM=$(echo "$GDATA_USED" | tr -d 'MGTKmgtkB')
-    GDATA_QUOTA_NUM=$(echo "$GDATA_QUOTA" | tr -d 'MGTKmgtkB')
-    echo -e "  Space : ${BOLD}${GDATA_USED}${NC} used of ${BOLD}${GDATA_QUOTA}${NC}"
+    GDATA_USED=$(echo "$GDATA_LINE" | awk '{print $3, $4}')
+    GDATA_QUOTA=$(echo "$GDATA_LINE" | awk '{print $5, $6}')
+    GDATA_IUSED=$(echo "$GDATA_LINE" | awk '{print $9}')
+    GDATA_IQUOTA=$(echo "$GDATA_LINE" | awk '{print $10}')
+    GDATA_USED_NUM=$(to_mib "$GDATA_USED")
+    GDATA_QUOTA_NUM=$(to_mib "$GDATA_QUOTA")
+    echo -e "  Space  : ${BOLD}${GDATA_USED}${NC} used of ${BOLD}${GDATA_QUOTA}${NC}"
     progress_bar $GDATA_USED_NUM $GDATA_QUOTA_NUM
+    echo -e "  Inodes : ${BOLD}${GDATA_IUSED}${NC} used of ${BOLD}${GDATA_IQUOTA}${NC}"
+    progress_bar $GDATA_IUSED $GDATA_IQUOTA
 else
     warn "No gdata quota found. Run 'lquota' to check format."
 fi
